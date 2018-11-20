@@ -2,6 +2,7 @@ from keras.utils import Sequence
 import numpy as np
 import nibabel as nib
 import os
+import cv2
 
 
 class Generator(Sequence):
@@ -37,10 +38,27 @@ class Generator(Sequence):
         img = nib.load(os.path.join(self.directory, self.volumes[index]))
         image = img.get_fdata()
         image = (np.array(image, dtype='uint16') / 256).astype('uint8').reshape((1, *image.shape, 1))
+        # todo
+        resizedimage = np.zeros((1, 128, 128, image.shape[-2], 1), dtype='uint8')
+        for i in range(image.shape[-1]):
+            resizedimage[0, :, :, i, 0] = cv2.resize(image[0, :, :, i], (128, 128))
+        # todo
+
         if not self.groundtruth:
             return image
         else:
             img = nib.load(os.path.join(self.directory, self.segmentations[index]))
             gt = img.get_fdata()
+            # todo
+            groundtruth = np.zeros((1, 128, 128, gt.shape[-1], 1), dtype='uint8')
+            for i in range(gt.shape[-1]):
+                groundtruth[0, :, :, i, 0] = cv2.resize(gt[:, :, i], (128, 128))
+            # todo
             gt = np.array(gt, dtype='uint8').reshape((1, *gt.shape, 1)) - 1
-            return image, gt
+            return resizedimage, groundtruth
+
+
+if __name__ == '__main__':
+    train_gen = Generator(r'D:\LiTS\Training_Batch2\media\nas\01_Datasets\CT\LITS\Training Batch 2')
+    x, y = train_gen[0]
+    print()
