@@ -39,9 +39,12 @@ class Generator(Sequence):
         image = img.get_fdata()
         image = (np.array(image, dtype='uint16') / 256).astype('uint8').reshape((1, *image.shape, 1))
         # todo
-        resizedimage = np.zeros((1, 128, 128, image.shape[-2], 1), dtype='uint8')
+        resizedimage = np.zeros((1, 128, 128, 128, 1), dtype='uint8')
+        temp = np.zeros((1, 128, 128, image.shape[-2], 1), dtype='uint8')
         for i in range(image.shape[-1]):
-            resizedimage[0, :, :, i, 0] = cv2.resize(image[0, :, :, i], (128, 128))
+            temp[0, :, :, i, 0] = cv2.resize(image[0, :, :, i], (128, 128))
+        for i in range(128):
+            resizedimage[0, :, i, :, 0] = cv2.resize(temp[0, :, i, :], (128, 128))
         # todo
 
         if not self.groundtruth:
@@ -50,9 +53,12 @@ class Generator(Sequence):
             img = nib.load(os.path.join(self.directory, self.segmentations[index]))
             gt = img.get_fdata()
             # todo
-            groundtruth = np.zeros((1, 128, 128, gt.shape[-1], 1), dtype='uint8')
+            groundtruth = np.zeros((1, 128, 128, 128, 1), dtype='uint8')
+            temp = np.zeros((1, 128, 128, gt.shape[-1], 1), dtype='uint8')
             for i in range(gt.shape[-1]):
-                groundtruth[0, :, :, i, 0] = cv2.resize(gt[:, :, i], (128, 128))
+                temp[0, :, :, i, 0] = cv2.resize(gt[:, :, i], (128, 128))
+            for i in range(128):
+                groundtruth[0, :, i, :, 0] = cv2.resize(temp[0, :, i, :], (128, 128))
             # todo
             gt = np.array(gt, dtype='uint8').reshape((1, *gt.shape, 1)) - 1
             return resizedimage, groundtruth
