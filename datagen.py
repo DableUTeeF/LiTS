@@ -40,13 +40,16 @@ class Generator(Sequence):
         img = nib.load(os.path.join(self.directory, self.volumes[index]))
         image = img.get_fdata()
         image = (np.array(image, dtype='uint16') / 256).astype('uint8').reshape((*image.shape, 1))
-
+        # todo
+        image = np.rollaxis(image, 2)
+        # todo
         if not self.groundtruth:
             return image
         else:
             img = nib.load(os.path.join(self.directory, self.segmentations[index]))
             gt = img.get_fdata()
             gt = np.array(gt, dtype='uint8').reshape((*gt.shape, 1)) - 1
+            gt = np.rollaxis(gt, 2)
             return image, gt
 
 #
