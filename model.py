@@ -39,3 +39,15 @@ def conv1():
     x = kl.Conv3D(8, 3, strides=1, padding='same', activation='relu', use_bias=False)(x)
     x = kl.Conv3D(1, 1, activation='tanh', use_bias=False)(x)
     return km.Model(inp, x)
+
+
+def conv2():
+    inp = kl.Input((512, None, 1))
+    x = kl.Conv2D(8, 3, strides=1, padding='same', activation='relu', use_bias=False)(inp)
+    x = kl.Conv2D(8, 3, strides=1, padding='same', activation='relu', use_bias=False)(x)
+    x = kl.Conv2D(8, 3, strides=1, padding='same', activation='relu', use_bias=False)(x)
+    x = kl.Conv2D(8, 3, strides=1, padding='same', activation='relu', use_bias=False)(x)
+    x = kl.Conv2D(8, 3, strides=1, padding='same', activation='relu', use_bias=False)(x)
+    x = kl.Conv2D(8, 3, strides=1, padding='same', activation='relu', use_bias=False)(x)
+    x = kl.Conv2D(1, 1, activation='tanh', use_bias=False)(x)
+    return km.Model(inp, x)

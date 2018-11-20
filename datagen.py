@@ -2,7 +2,6 @@ from keras.utils import Sequence
 import numpy as np
 import nibabel as nib
 import os
-import cv2
 
 
 size = 512
@@ -40,30 +39,14 @@ class Generator(Sequence):
             index = rnd
         img = nib.load(os.path.join(self.directory, self.volumes[index]))
         image = img.get_fdata()
-        image = (np.array(image, dtype='uint16') / 256).astype('uint8').reshape((1, *image.shape, 1))
-        # todo
-        resizedimage = np.zeros((1, size, size, size, 1), dtype='uint8')
-        temp = np.zeros((1, size, size, image.shape[-2], 1), dtype='uint8')
-        for i in range(image.shape[-1]):
-            temp[0, :, :, i, 0] = cv2.resize(image[0, :, :, i], (size, size))
-        for i in range(size):
-            resizedimage[0, :, i, :, 0] = cv2.resize(temp[0, :, i, :], (size, size))
-        # todo
+        image = (np.array(image, dtype='uint16') / 256).astype('uint8').reshape((*image.shape, 1))
 
         if not self.groundtruth:
             return image
         else:
             img = nib.load(os.path.join(self.directory, self.segmentations[index]))
             gt = img.get_fdata()
-            # todo
-            groundtruth = np.zeros((1, size, size, size, 1), dtype='uint8')
-            temp = np.zeros((1, size, size, gt.shape[-1], 1), dtype='uint8')
-            for i in range(gt.shape[-1]):
-                temp[0, :, :, i, 0] = cv2.resize(gt[:, :, i], (size, size))
-            for i in range(size):
-                groundtruth[0, :, i, :, 0] = cv2.resize(temp[0, :, i, :], (size, size))
-            # todo
-            gt = np.array(gt, dtype='uint8').reshape((1, *gt.shape, 1)) - 1
+            gt = np.array(gt, dtype='uint8').reshape((*gt.shape, 1)) - 1
             return image, gt
 
 #
