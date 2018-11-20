@@ -18,7 +18,7 @@ def lstm1():
 
 
 def lstm2():
-    inp = kl.Input((128, 128, None, 1))
+    inp = kl.Input((512, 512, None, 1))
     x = kl.TimeDistributed(kl.TimeDistributed(kl.LSTM(32, return_sequences=True)))(inp)
     x = kl.Permute((2, 1, 3, 4))(x)
     x = kl.TimeDistributed(kl.TimeDistributed(kl.LSTM(32, return_sequences=True)))(x)
