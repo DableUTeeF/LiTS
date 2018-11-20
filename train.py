@@ -106,7 +106,7 @@ if __name__ == '__main__':
                 train_loss += loss
                 train_iter_count += 1
                 if not platform.system() == 'Windows':
-                    print(idx, 'Train loss:', '%.4f' % (train_loss / train_iter_count), end='\r')
+                    print(idx, str(i)+'/'+str(iterations), 'Train loss:', '%.4f' % (train_loss / train_iter_count), end='\r')
 
             if platform.system() == 'Windows':
                 print('Train loss:', train_loss / train_iter_count)
