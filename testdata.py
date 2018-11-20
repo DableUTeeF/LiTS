@@ -1,7 +1,12 @@
 import nibabel as nib
 import numpy as np
+import platform
 
-img = nib.load('/media/palm/Unimportant/LITS/Test/test-volume-0.nii')
+if platform.system() == 'Windows':
+    rootpath = r'D:\LiTS'
+else:
+    rootpath = r'/media/palm/Unimportant/LITS'
+img = nib.load('Test/test-volume-0.nii')
 image = img.get_fdata()
 image = np.array(image, dtype='uint16')
 shape = image.shape
