@@ -3,7 +3,7 @@ import datagen
 from keras import optimizers as ko
 from keras import backend as K
 import numpy as np
-
+import platform
 
 class SGDAccum(ko.Optimizer):
     """Stochastic gradient descent optimizer.
@@ -80,10 +80,12 @@ if __name__ == '__main__':
     batch_size = 8
     model = m.unet()
     print(model.summary())
-    train_gen = datagen.Generator(r'D:\LiTS\Training_Batch2\media\nas\01_Datasets\CT\LITS\Training Batch 2')
-    test_gen = datagen.Generator(r'D:\LiTS\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1')
-    # train_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 2')
-    # test_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 1')
+    if platform.system() == 'Windows':
+        train_gen = datagen.Generator(r'D:\LiTS\Training_Batch2\media\nas\01_Datasets\CT\LITS\Training Batch 2')
+        test_gen = datagen.Generator(r'D:\LiTS\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1')
+    else:
+        train_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 2')
+        test_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 1')
 
     for epoch in range(99):
         print('Epoch:', epoch)
@@ -103,7 +105,10 @@ if __name__ == '__main__':
                                             )
                 train_loss += loss
                 train_iter_count += 1
-            print('Train loss:', train_loss / train_iter_count)
+            if platform.system() == 'Windows':
+                print('Train loss:', train_loss / train_iter_count)
+            else:
+                print('Train loss:', '%.4f' % train_loss / train_iter_count, end='')
         for x, y in test_gen:
             test_iter_count = 0
             test_loss = 0
@@ -114,6 +119,10 @@ if __name__ == '__main__':
                                             )
                 test_loss += loss
                 test_iter_count += 1
-            print('Test loss:', test_loss / test_iter_count)
+            if platform.system() == 'Windows':
+                print('Test loss:', test_loss / test_iter_count)
+            else:
+                print(' - Test loss:', '%.4f' % test_loss / test_iter_count, end='\r')
+
         # model.fit_generator(train_gen, validation_data=test_gen)
         model.save_weights('weights/test.h5')
