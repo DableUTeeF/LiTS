@@ -3,7 +3,7 @@ import datagen
 from keras import optimizers as ko
 
 if __name__ == '__main__':
-    model = m.res20()
+    model = m.conv1()
     model.compile(ko.adam(),
                   loss='mse'
                   )

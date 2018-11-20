@@ -42,5 +42,5 @@ class Generator(Sequence):
         else:
             img = nib.load(os.path.join(self.directory, self.segmentations[index]))
             gt = img.get_fdata()
-            gt = np.array(gt, dtype='uint8').reshape((1, *gt.shape, 1))
+            gt = np.array(gt, dtype='uint8').reshape((1, *gt.shape, 1)) - 1
             return image, gt
