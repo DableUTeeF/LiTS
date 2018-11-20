@@ -89,10 +89,10 @@ if __name__ == '__main__':
 
     for epoch in range(99):
         print('Epoch:', epoch)
-        for x, y in train_gen:
+        for idx, (x, y) in enumerate(train_gen):
             train_iter_count = 0
             train_loss = 0
-            iterations = int(np.ceil(max(x.shape[0], 0) / batch_size))
+            iterations = max(int(np.ceil(max(x.shape[0], 0) / batch_size)), 1)
             model.compile(SGDAccum(lr=0.01,
                                    momentum=0.9,
                                    accum_iters=iterations,
@@ -106,16 +106,14 @@ if __name__ == '__main__':
                 train_loss += loss
                 train_iter_count += 1
                 if not platform.system() == 'Windows':
-                    print('Train loss:', '%.4f' % (train_loss / train_iter_count), end='\r')
+                    print(idx, 'Train loss:', '%.4f' % (train_loss / train_iter_count), end='\r')
 
             if platform.system() == 'Windows':
                 print('Train loss:', train_loss / train_iter_count)
-            else:
-                print('Train loss:', '%.4f' % (train_loss / train_iter_count), end='')
         for x, y in test_gen:
             test_iter_count = 0
             test_loss = 0
-            iterations = int(np.ceil(max(x.shape[0], 0) / batch_size))
+            iterations = max(int(np.ceil(max(x.shape[0], 0) / batch_size)), 1)
             for i in range(iterations):
                 loss = model.train_on_batch(x=x[i:i + batch_size, :, :, :],
                                             y=y[i:i + batch_size, :, :, :]
@@ -125,7 +123,7 @@ if __name__ == '__main__':
             if platform.system() == 'Windows':
                 print('Test loss:', test_loss / test_iter_count)
             else:
-                print(' - Test loss:', '%.4f' % (test_loss / test_iter_count), end='\r')
+                print('Train loss:', '%.4f' % (train_loss / train_iter_count), '- Test loss:', '%.4f' % (test_loss / test_iter_count), end='\r')
 
         # model.fit_generator(train_gen, validation_data=test_gen)
         model.save_weights('weights/test.h5')
