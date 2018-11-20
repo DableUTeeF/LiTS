@@ -105,10 +105,13 @@ if __name__ == '__main__':
                                             )
                 train_loss += loss
                 train_iter_count += 1
+                if not platform.system() == 'Windows':
+                    print('Train loss:', '%.4f' % (train_loss / train_iter_count), end='\r')
+
             if platform.system() == 'Windows':
                 print('Train loss:', train_loss / train_iter_count)
             else:
-                print('Train loss:', '%.4f' % train_loss / train_iter_count, end='')
+                print('Train loss:', '%.4f' % (train_loss / train_iter_count), end='')
         for x, y in test_gen:
             test_iter_count = 0
             test_loss = 0
@@ -122,7 +125,7 @@ if __name__ == '__main__':
             if platform.system() == 'Windows':
                 print('Test loss:', test_loss / test_iter_count)
             else:
-                print(' - Test loss:', '%.4f' % test_loss / test_iter_count, end='\r')
+                print(' - Test loss:', '%.4f' % (test_loss / test_iter_count), end='\r')
 
         # model.fit_generator(train_gen, validation_data=test_gen)
         model.save_weights('weights/test.h5')
