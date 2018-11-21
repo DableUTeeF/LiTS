@@ -79,6 +79,7 @@ class SGDAccum(ko.Optimizer):
 if __name__ == '__main__':
     batch_size = 8
     model = m.unet()
+    model.compile(ko.sgd(), 'mse')
     print(model.summary())
     if platform.system() == 'Windows':
         train_gen = datagen.Generator(r'D:\LiTS\Training_Batch2\media\nas\01_Datasets\CT\LITS\Training Batch 2')
@@ -86,19 +87,20 @@ if __name__ == '__main__':
     else:
         train_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 2')
         test_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 1')
-
+    print('Train length', len(train_gen))
+    print('Test length', len(test_gen))
     for epoch in range(99):
         print('Epoch:', epoch)
         for idx, (x, y) in enumerate(train_gen):
             train_iter_count = 0
             train_loss = 0
             iterations = max(int(np.ceil(max(x.shape[0], 0) / batch_size)), 1)
-            model.compile(SGDAccum(lr=0.01,
-                                   momentum=0.9,
-                                   accum_iters=iterations,
-                                   ),
-                          loss='mse'
-                          )
+            # model.compile(SGDAccum(lr=0.01,
+            #                        momentum=0.9,
+            #                        accum_iters=iterations,
+            #                        ),
+            #               loss='mse'
+            #               )
             for i in range(iterations):
                 loss = model.train_on_batch(x=x[i:i + batch_size, :, :, :],
                                             y=y[i:i + batch_size, :, :, :]
@@ -106,7 +108,8 @@ if __name__ == '__main__':
                 train_loss += loss
                 train_iter_count += 1
                 if not platform.system() == 'Windows':
-                    print(idx, str(i)+'/'+str(iterations), 'Train loss:', '%.4f' % (train_loss / train_iter_count), end='\r')
+                    print(idx, str(i)+'/'+str(iterations), 'Train loss:', '%.4f' % (train_loss / train_iter_count), end='')
+                    print('                  ', end='\r')
 
             if platform.system() == 'Windows':
                 print('Train loss:', train_loss / train_iter_count)
@@ -124,6 +127,6 @@ if __name__ == '__main__':
                 print('Test loss:', test_loss / test_iter_count)
             else:
                 print('Train loss:', '%.4f' % (train_loss / train_iter_count), '- Test loss:', '%.4f' % (test_loss / test_iter_count), end='\r')
-
+        print()
         # model.fit_generator(train_gen, validation_data=test_gen)
         model.save_weights('weights/test.h5')

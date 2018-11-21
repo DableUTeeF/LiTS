@@ -83,5 +83,5 @@ def unet():
     inp = kl.Input((512, 512, 1))
     x = ublock(inp, 32, 5)
     x = kl.UpSampling2D()(x)
-    x = kl.Conv2D(1, 1, activation='tanh')(x)
+    x = kl.Conv2D(3, 1, activation='sigmoid')(x)
     return km.Model(inp, x)
