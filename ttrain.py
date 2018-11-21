@@ -192,7 +192,6 @@ if __name__ == '__main__':
                 for i in range(iterations):
                     outputs = model(inputs[i:i + args.batch_mul, :, :, :])
                     loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :]) / iterations
-                    loss.backward()
                     test_loss += loss.item() * args.batch_mul
                     total += targets.size(0)
 
