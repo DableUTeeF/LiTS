@@ -8,11 +8,12 @@ size = 512
 
 
 class Generator(Sequence):
-    def __init__(self, directory, groundtruth=True, shuffle=True):
+    def __init__(self, directory, groundtruth=True, shuffle=True, format='keras'):
         self.directory = directory
         self.fileslist = os.listdir(self.directory)
         self.groundtruth = groundtruth
         self.shuffle = shuffle
+        self.format = format
         self.segmentations = []
         self.volumes = []
         for file in self.fileslist:
@@ -57,6 +58,9 @@ class Generator(Sequence):
             temp[:, :, :, 0] = gt[:, :, :, 0] == 0 - 1
             temp[:, :, :, 1] = gt[:, :, :, 0] == 1 - 1
             temp[:, :, :, 2] = gt[:, :, :, 0] == 2 - 1
+            if self.format == 'torch':
+                image = np.rollaxis(image, 3, 1)
+                temp = np.rollaxis(temp, 3, 1)
             return image, temp
 
 

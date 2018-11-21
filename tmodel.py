@@ -48,10 +48,10 @@ class Ublock(nn.Module):
         self.bn1 = nn.BatchNorm2d(out_channel)
         self.conv2 = nn.Conv2d(out_channel, out_channel, 3, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_channel)
-        self.unet = Ublock(out_channel, out_channel*2, depth-1)
         if depth > 0:
-            self.upsampling = nn.UpsamplingNearest2d()
-            self.conv3 = nn.Conv2d(out_channel*2, out_channel, 3, padding=1, bias=False)
+            self.unet = Ublock(out_channel, out_channel*2, depth-1)
+            self.upsampling = nn.UpsamplingNearest2d(scale_factor=2)
+            self.conv3 = nn.Conv2d(out_channel, out_channel, 3, padding=1, bias=False)
             self.bn3 = nn.BatchNorm2d(out_channel)
 
     def forward(self, x):

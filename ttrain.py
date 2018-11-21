@@ -73,7 +73,7 @@ if __name__ == '__main__':
         'imsize_l': 256,
         'traindir': '/root/palm/DATA/plant/train',
         'valdir': '/root/palm/DATA/plant/validate',
-        'workers': 3,
+        'workers': 0,
         'resume': False,
     })
     best_loss = 0
@@ -97,8 +97,12 @@ if __name__ == '__main__':
         train_gen = datagen.Generator(r'D:\LiTS\Training_Batch2\media\nas\01_Datasets\CT\LITS\Training Batch 2')
         test_gen = datagen.Generator(r'D:\LiTS\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1')
     else:
-        train_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 2')
-        test_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 1')
+        train_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 2',
+                                      format='torch'
+                                      )
+        test_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 1',
+                                     format='torch'
+                                     )
     trainloader = torch.utils.data.DataLoader(train_gen,
                                               batch_size=args.batch_size,
                                               shuffle=True,
@@ -140,11 +144,12 @@ if __name__ == '__main__':
         last_time = start_time
         for batch_idx, (inputs, targets) in enumerate(trainloader):
             inputs, targets = inputs.to('cuda'), targets.to('cuda')
-
+            inputs = inputs[0]
+            targets = targets[0]
             iterations = max(int(np.ceil(max(inputs.shape[0], 0) / args.batch_mul)), 1)
             for i in range(iterations):
                 outputs = model(inputs[i:i + args.batch_mul, :, :, :])
-                loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :]) / args.iterations
+                loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :]) / iterations
                 loss.backward()
                 train_loss += loss.item() * args.batch_mul
                 total += targets.size(0)
@@ -159,7 +164,7 @@ if __name__ == '__main__':
                 pass
             lss = f'{batch_idx}/{len(trainloader)} | ' + \
                   f'ETA: {format_time(step_time*(len(trainloader)-batch_idx))} - ' + \
-                  f'loss: {train_loss/(batch_idx+1):.{5}} - '
+                  f'loss: {train_loss/(batch_idx+1):.{5}}'
             print(f'\r{lss}', end='')
 
         print(f'\r '
@@ -181,10 +186,12 @@ if __name__ == '__main__':
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(val_loader):
                 inputs, targets = inputs.to('cuda'), targets.to('cuda')
+                inputs = inputs[0]
+                targets = targets[0]
                 iterations = max(int(np.ceil(max(inputs.shape[0], 0) / args.batch_mul)), 1)
                 for i in range(iterations):
                     outputs = model(inputs[i:i + args.batch_mul, :, :, :])
-                    loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :]) / args.iterations
+                    loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :]) / iterations
                     loss.backward()
                     test_loss += loss.item() * args.batch_mul
                     total += targets.size(0)
