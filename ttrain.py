@@ -18,6 +18,7 @@ import platform
 import time
 import datagen
 import numpy as np
+from torch.optim.lr_scheduler import MultiStepLR
 
 
 class DotDict(dict):
@@ -86,11 +87,13 @@ if __name__ == '__main__':
         log = {'acc': [], 'loss': [], 'val_acc': []}
         print(f'Log {args.try_no} not found')
     model = tmodel.Unet().cuda()
-    optimizer = torch.optim.SGD(model.parameters(), 0.1,
-                                momentum=0.9,
+    optimizer = torch.optim.Adam(model.parameters(), 0.1,
+                                # momentum=0.9,
                                 weight_decay=1e-4,
                                 # nesterov=False,
-                                )
+                                 )
+    scheduler = MultiStepLR(optimizer, [30, 60])
+
     criterion = nn.MSELoss().cuda()
     zz = 0
     if platform.system() == 'Windows':
@@ -220,6 +223,7 @@ if __name__ == '__main__':
 
 
     for epoch in range(start_epoch, start_epoch + args.epochs):
+        scheduler.step()
         train(epoch)
         test(epoch)
         print(f'best: {best_loss}')
