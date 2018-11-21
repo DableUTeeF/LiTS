@@ -77,7 +77,7 @@ if __name__ == '__main__':
         'workers': 0,
         'resume': False,
     })
-    best_loss = 0
+    best_loss = float('inf')
     best_no = 0
     start_epoch = 1
     try:
@@ -88,9 +88,9 @@ if __name__ == '__main__':
         print(f'Log {args.try_no} not found')
     model = tmodel.Unet().cuda()
     optimizer = torch.optim.Adam(model.parameters(), 0.1,
-                                # momentum=0.9,
-                                weight_decay=1e-4,
-                                # nesterov=False,
+                                 # momentum=0.9,
+                                 weight_decay=1e-4,
+                                 # nesterov=False,
                                  )
     scheduler = MultiStepLR(optimizer, [30, 60])
 
@@ -203,7 +203,7 @@ if __name__ == '__main__':
         print(f' - val_loss: {test_loss / (batch_idx+1):.{5}}')
         # platue.step(correct)
         log['val_acc'].append(100. * correct / total)
-        loss = test_loss / (batch_idx+1)
+        loss = test_loss / (batch_idx + 1)
         # Save checkpoint.
         # print('Saving..')
         state = {
