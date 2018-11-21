@@ -51,16 +51,19 @@ class Generator(Sequence):
         else:
             img = nib.load(os.path.join(self.directory, self.segmentations[index]))
             gt = img.get_fdata()
-            gt = np.array(gt, dtype='float32').reshape((*gt.shape, 1)) - 1
+            gt = np.array(gt, dtype='float32').reshape((*gt.shape, 1))
             gt = np.rollaxis(gt, 2)
             # todo
             temp = np.zeros((*gt.shape[:-1], 3), dtype='float32')
-            temp[:, :, :, 0] = gt[:, :, :, 0] == 0 - 1
-            temp[:, :, :, 1] = gt[:, :, :, 0] == 1 - 1
-            temp[:, :, :, 2] = gt[:, :, :, 0] == 2 - 1
+            temp[:, :, :, 0] = gt[:, :, :, 0] == 0
+            temp[:, :, :, 1] = gt[:, :, :, 0] == 1
+            temp[:, :, :, 2] = gt[:, :, :, 0] == 2
             if self.format == 'torch':
                 image = np.rollaxis(image, 3, 1)
                 temp = np.rollaxis(temp, 3, 1)
+            elif self.format == 'ce':
+                image = np.rollaxis(image, 3, 1)
+                temp = np.rollaxis(gt, 3, 1)
             return image, temp
 
 

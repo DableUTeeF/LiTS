@@ -1,7 +1,7 @@
 import nibabel as nib
 import numpy as np
 import platform
-
+from PIL import Image
 if platform.system() == 'Windows':
     rootpath = r'D:\LiTS'
 else:
@@ -22,3 +22,6 @@ for height in range(shape[0]):
                 image2[height, width, depth] = int(hexval[8:], 2)
             else:
                 image2[height, width, depth] = 0
+im = np.mean(image * 127, 0).astype('uint8')
+im = Image.fromarray(im, mode='L')
+im.show()
