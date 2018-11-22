@@ -71,12 +71,12 @@ class Ublock(nn.Module):
 
 
 class Unet(nn.Module):
-    def __init__(self):
+    def __init__(self, out):
         super().__init__()
         self.conv1 = nn.Conv2d(1, 32, 3, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(32)
         self.unet = Ublock(32, 32, 5)
-        self.conv2 = nn.Conv2d(32, 3, 1, bias=False)
+        self.conv2 = nn.Conv2d(32, out, 1, bias=False)
 
     def forward(self, x):
         out = self.conv1(x)

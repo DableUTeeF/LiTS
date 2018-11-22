@@ -65,11 +65,12 @@ if __name__ == '__main__':
         'batch_size': 1,
         'batch_mul': 8,
         'val_batch_size': 1,
+        'data_format': 'bin',
         'cuda': True,
         'model': '',
         'train_plot': False,
         'epochs': 90,
-        'try_no': 'ce3',
+        'try_no': 'bce1',
         'imsize': 224,
         'imsize_l': 256,
         'traindir': '/root/palm/DATA/plant/train',
@@ -86,7 +87,7 @@ if __name__ == '__main__':
     except FileNotFoundError:
         log = {'acc': [], 'loss': [], 'val_acc': []}
         print(f'Log {args.try_no} not found')
-    model = tmodel.Unet().cuda()
+    model = tmodel.Unet(1).cuda()
     optimizer = torch.optim.SGD(model.parameters(), 0.1,
                                 momentum=0.9,
                                 weight_decay=1e-4,
@@ -94,17 +95,17 @@ if __name__ == '__main__':
                                 )
     scheduler = MultiStepLR(optimizer, [10, 30, 60])
 
-    criterion = nn.CrossEntropyLoss().cuda()
+    criterion = nn.BCELoss().cuda()
     zz = 0
     if platform.system() == 'Windows':
         train_gen = datagen.Generator(r'D:\LiTS\Training_Batch2\media\nas\01_Datasets\CT\LITS\Training Batch 2')
         test_gen = datagen.Generator(r'D:\LiTS\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1')
     else:
         train_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 2',
-                                      format='ce'
+                                      format=args.data_format
                                       )
         test_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 1',
-                                     format='ce'
+                                     format=args.data_format
                                      )
     trainloader = torch.utils.data.DataLoader(train_gen,
                                               batch_size=args.batch_size,
