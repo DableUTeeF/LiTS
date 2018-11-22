@@ -69,7 +69,7 @@ if __name__ == '__main__':
         'model': '',
         'train_plot': False,
         'epochs': 90,
-        'try_no': '1_densenotransfer',
+        'try_no': 'ce3',
         'imsize': 224,
         'imsize_l': 256,
         'traindir': '/root/palm/DATA/plant/train',
@@ -87,24 +87,24 @@ if __name__ == '__main__':
         log = {'acc': [], 'loss': [], 'val_acc': []}
         print(f'Log {args.try_no} not found')
     model = tmodel.Unet().cuda()
-    optimizer = torch.optim.Adam(model.parameters(), 0.1,
-                                 # momentum=0.9,
-                                 weight_decay=1e-4,
-                                 # nesterov=False,
-                                 )
-    scheduler = MultiStepLR(optimizer, [30, 60])
+    optimizer = torch.optim.SGD(model.parameters(), 0.1,
+                                momentum=0.9,
+                                weight_decay=1e-4,
+                                # nesterov=False,
+                                )
+    scheduler = MultiStepLR(optimizer, [10, 30, 60])
 
-    criterion = nn.MSELoss().cuda()
+    criterion = nn.CrossEntropyLoss().cuda()
     zz = 0
     if platform.system() == 'Windows':
         train_gen = datagen.Generator(r'D:\LiTS\Training_Batch2\media\nas\01_Datasets\CT\LITS\Training Batch 2')
         test_gen = datagen.Generator(r'D:\LiTS\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1')
     else:
         train_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 2',
-                                      format='torch'
+                                      format='ce'
                                       )
         test_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 1',
-                                     format='torch'
+                                     format='ce'
                                      )
     trainloader = torch.utils.data.DataLoader(train_gen,
                                               batch_size=args.batch_size,
@@ -152,7 +152,7 @@ if __name__ == '__main__':
             iterations = max(int(np.ceil(max(inputs.shape[0], 0) / args.batch_mul)), 1)
             for i in range(iterations):
                 outputs = model(inputs[i:i + args.batch_mul, :, :, :])
-                loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :]) / iterations
+                loss = criterion(outputs, targets[i:i + args.batch_mul, 0, :, :].long()) / iterations
                 loss.backward()
                 train_loss += loss.item() * args.batch_mul
                 total += targets.size(0)
@@ -194,7 +194,7 @@ if __name__ == '__main__':
                 iterations = max(int(np.ceil(max(inputs.shape[0], 0) / args.batch_mul)), 1)
                 for i in range(iterations):
                     outputs = model(inputs[i:i + args.batch_mul, :, :, :])
-                    loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :]) / iterations
+                    loss = criterion(outputs, targets[i:i + args.batch_mul, 0, :, :].long()) / iterations
                     test_loss += loss.item() * args.batch_mul
                     total += targets.size(0)
 
@@ -214,7 +214,7 @@ if __name__ == '__main__':
         }
         if not os.path.isdir('checkpoint'):
             os.mkdir('checkpoint')
-        if loss < best_loss:
+        if loss < best_loss and loss != 0:
             torch.save(state, f'./checkpoint/try_{args.try_no}best.t7')
             best_loss = loss
         torch.save(state, f'./checkpoint/try_{args.try_no}temp.t7')

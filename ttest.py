@@ -15,7 +15,7 @@ if __name__ == '__main__':
     dev = 'cuda'
     model = tmodel.Unet().to(dev)
     # print(model)
-    checkpoint = torch.load('checkpoint/try_1_densenotransfertemp.t7')
+    checkpoint = torch.load('checkpoint/try_ce3temp.t7')
     model.load_state_dict(checkpoint['net'])
     if platform.system() == 'Windows':
         rootpath = r'D:\LiTS'
