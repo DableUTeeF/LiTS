@@ -6,13 +6,19 @@ from PIL import Image
 import numpy as np
 
 if __name__ == '__main__':
-    file = 'segment.pk'
+    file = 'mask.pk'
     with open(file, 'rb') as wr:
         array = pk.load(wr)
     print(array.shape)
-    print(np.max(array))
+    array = np.rollaxis(array, 1)
+    print(array.shape)
+    array = np.rollaxis(array, 1, 4)
+    print(array.shape)
+
+    m = np.max(array)
     for i in range(3):
-        im = np.max(array, i) * 127
+        im = np.max(array[0], i) * 255 / m
+        print(im.shape)
         img = Image.fromarray(im, mode='L')
         img.show()
 

@@ -64,6 +64,9 @@ class Generator(Sequence):
             elif self.format == 'ce':
                 image = np.rollaxis(image, 3, 1)
                 temp = np.rollaxis(gt, 3, 1)
+            elif self.format == 'bin':
+                image = np.rollaxis(image, 3, 1)
+                temp = np.rollaxis(gt, 3, 1).astype('bool').astype('uint8')
             return image, temp
 
 
