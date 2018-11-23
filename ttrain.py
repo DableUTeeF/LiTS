@@ -98,8 +98,10 @@ if __name__ == '__main__':
     criterion = nn.BCELoss().cuda()
     zz = 0
     if platform.system() == 'Windows':
-        train_gen = datagen.Generator(r'D:\LiTS\Training_Batch2\media\nas\01_Datasets\CT\LITS\Training Batch 2')
-        test_gen = datagen.Generator(r'D:\LiTS\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1')
+        train_gen = datagen.Generator(r'D:\LiTS\Training_Batch2\media\nas\01_Datasets\CT\LITS\Training Batch 2',
+                                      format=args.data_format)
+        test_gen = datagen.Generator(r'D:\LiTS\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1',
+                                     format=args.data_format)
     else:
         train_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 2',
                                       format=args.data_format
@@ -153,7 +155,7 @@ if __name__ == '__main__':
             iterations = max(int(np.ceil(max(inputs.shape[0], 0) / args.batch_mul)), 1)
             for i in range(iterations):
                 outputs = model(inputs[i:i + args.batch_mul, :, :, :])
-                loss = criterion(outputs, targets[i:i + args.batch_mul, 0, :, :].long()) / iterations
+                loss = criterion(outputs, targets[i:i + args.batch_mul, 0, :, :].float()) / iterations
                 loss.backward()
                 train_loss += loss.item() * args.batch_mul
                 total += targets.size(0)
@@ -195,7 +197,7 @@ if __name__ == '__main__':
                 iterations = max(int(np.ceil(max(inputs.shape[0], 0) / args.batch_mul)), 1)
                 for i in range(iterations):
                     outputs = model(inputs[i:i + args.batch_mul, :, :, :])
-                    loss = criterion(outputs, targets[i:i + args.batch_mul, 0, :, :].long()) / iterations
+                    loss = criterion(outputs, targets[i:i + args.batch_mul, 0, :, :].float()) / iterations
                     test_loss += loss.item() * args.batch_mul
                     total += targets.size(0)
 
