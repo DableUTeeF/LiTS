@@ -72,20 +72,20 @@ def format_time(seconds):
 if __name__ == '__main__':
 
     args = DotDict({
-        'batch_size': 1,
-        'batch_mul': 8,
+        'batch_size': 32,
+        'batch_mul': 1,
         'val_batch_size': 1,
         'data_format': 'bin',
         'cuda': True,
         'model': '',
         'train_plot': False,
         'epochs': 90,
-        'try_no': 'bmse3',
+        'try_no': '2dmse1',
         'imsize': 224,
         'imsize_l': 256,
         'traindir': '/root/palm/DATA/plant/train',
         'valdir': '/root/palm/DATA/plant/validate',
-        'workers': 0,
+        'workers': 16,
         'resume': False,
     })
     best_loss = float('inf')
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     except FileNotFoundError:
         log = {'acc': [], 'loss': [], 'val_acc': []}
         print(f'Log {args.try_no} not found')
-    model = tmodel.Unet(1).cuda()
+    model = tmodel.Unet(3).cuda()
     optimizer = torch.optim.SGD(model.parameters(), 0.1,
                                 momentum=0.9,
                                 weight_decay=1e-4,
@@ -115,10 +115,12 @@ if __name__ == '__main__':
                                      out_format=args.data_format)
     else:
         train_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 2',
-                                      out_format=args.data_format
+                                      out_format=args.data_format,
+                                      dim=2
                                       )
         test_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 1',
-                                     out_format=args.data_format
+                                     out_format=args.data_format,
+                                     dim=2
                                      )
     trainloader = torch.utils.data.DataLoader(train_gen,
                                               batch_size=args.batch_size,
@@ -162,16 +164,22 @@ if __name__ == '__main__':
         acc = 0
         for batch_idx, (inputs, targets) in enumerate(trainloader):
             inputs, targets = inputs.to('cuda'), targets.to('cuda')
-            inputs = inputs[0]
-            targets = targets[0]
+            # inputs = inputs[0]
+            # targets = targets[0]
             iterations = max(int(np.ceil(max(inputs.shape[0], 0) / args.batch_mul)), 1)
-            for i in range(inputs.shape[0]-8):
-                outputs = model(inputs[i:i + args.batch_mul, :, :, :])
-                loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :].float()) / (inputs.shape[0]-8)
-                loss.backward()
-                train_loss += loss.item() * args.batch_mul
-                # acc += f1(targets[i:i + args.batch_mul, :, :, :], outputs)
-                total += targets.size(0)
+            # for i in range(inputs.shape[0]-8):
+            #     outputs = model(inputs[i:i + args.batch_mul, :, :, :])
+            #     loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :].float()) / (inputs.shape[0]-8)
+            #     loss.backward()
+            #     train_loss += loss.item() * args.batch_mul
+            #     # acc += f1(targets[i:i + args.batch_mul, :, :, :], outputs)
+            #     total += targets.size(0)
+            outputs = model(inputs.float())
+            loss = criterion(outputs, targets.float())
+            loss.backward()
+            train_loss += loss.item() * args.batch_mul
+            # acc += f1(targets[i:i + args.batch_mul, :, :, :], outputs)
+            total += targets.size(0)
 
             optimizer.step()
             optimizer.zero_grad()
@@ -206,15 +214,19 @@ if __name__ == '__main__':
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(val_loader):
                 inputs, targets = inputs.to('cuda'), targets.to('cuda')
-                inputs = inputs[0]
-                targets = targets[0]
+                # inputs = inputs[0]
+                # targets = targets[0]
                 iterations = max(int(np.ceil(max(inputs.shape[0], 0) / args.batch_mul)), 1)
-                for i in range(inputs.shape[0]-8):
-                    outputs = model(inputs[i:i + args.batch_mul, :, :, :])
-                    loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :].float()) / (inputs.shape[0]-8)
-                    test_loss += loss.item() * args.batch_mul
-                    acc += f1(targets[i:i + args.batch_mul, :, :, :], outputs)
-                    total += targets.size(0)
+                # for i in range(inputs.shape[0]-8):
+                #     outputs = model(inputs[i:i + args.batch_mul, :, :, :])
+                #     loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :].float()) / (inputs.shape[0]-8)
+                #     test_loss += loss.item() * args.batch_mul
+                #     acc += f1(targets[i:i + args.batch_mul, :, :, :], outputs)
+                #     total += targets.size(0)
+                outputs = model(inputs.float())
+                loss = criterion(outputs, targets.float())
+                test_loss += loss.item() * args.batch_mul
+                total += targets.size(0)
 
                 # progress_bar(batch_idx, len(val_loader), 'Acc: %.3f%%'
                 #              % (100. * correct / total))

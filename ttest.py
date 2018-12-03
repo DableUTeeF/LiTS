@@ -9,13 +9,14 @@ import platform
 import nibabel as nib
 import datagen
 import numpy as np
+from PIL import Image
 
 
 if __name__ == '__main__':
     dev = 'cuda'
-    model = tmodel.Unet().to(dev)
+    model = tmodel.Unet(3).to(dev)
     # print(model)
-    checkpoint = torch.load('checkpoint/try_ce3temp.t7')
+    checkpoint = torch.load('checkpoint/try_2dmse1temp.t7')
     model.load_state_dict(checkpoint['net'])
     if platform.system() == 'Windows':
         rootpath = r'D:\LiTS'
@@ -24,8 +25,12 @@ if __name__ == '__main__':
     # img = nib.load('Test/test-volume-0.nii')
     out = []
     c = 0
-    test_gen = datagen.Generator(r'D:\LiTS\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1',
-                                 out_format='torch')
+    test_gen = datagen.Generator('/media/palm/Unimportant/LITS/Test/',
+                                 out_format='bin',
+                                 groundtruth=False,
+                                 dim=2,
+
+                                 )
     model.eval()
     correct = 0
     total = 0
@@ -36,13 +41,18 @@ if __name__ == '__main__':
         pin_memory=False)
 
     with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(val_loader):
-            inputs, targets = inputs.to(dev), targets.to(dev)
-            inputs = inputs[0]
-            targets = targets[0]
+        for batch_idx, inputs in enumerate(val_loader):
+            inputs = inputs.to(dev)
+            inputs = inputs
             t = inputs.shape
             iterations = max(int(np.ceil(max(inputs.shape[0], 0) / 8)), 1)
-            mask = np.zeros(targets.shape)
+            # mask = np.zeros(targets.shape)
+            outputs = model(inputs.float())
+            outputs = outputs.cpu().detach().numpy()[0] * 255
+            for i in range(3):
+                img = Image.fromarray(outputs.astype('uint8')[i])
+                img.show()
+            break
             for i in range(iterations):
                 outputs = model(inputs[i:i + 8, :, :, :])
                 mask[i:i + 8, :, :, :] += outputs.cpu().detach().numpy()

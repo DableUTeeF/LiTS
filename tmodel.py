@@ -71,9 +71,9 @@ class Ublock(nn.Module):
 
 
 class Unet(nn.Module):
-    def __init__(self, out):
+    def __init__(self, out, in_=3):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 32, 3, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(in_, 32, 3, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(32)
         self.unet = Ublock(32, 32, 5)
         self.conv2 = nn.Conv2d(32, out, 1, bias=False)
@@ -83,6 +83,6 @@ class Unet(nn.Module):
         out = self.bn1(out)
         out = nn.ReLU()(out)
         out = self.unet(out)
-        out += x
+        # out += x
         out = self.conv2(out)
         return nn.Sigmoid()(out)

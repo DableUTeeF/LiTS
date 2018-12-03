@@ -90,25 +90,25 @@ class Generator(Sequence):
             xplanef = cv2.resize(xplanef, (512, 512))
             xplanel = np.mean(image << 8 >> 8, axis=0).astype('uint8')
             xplanel = cv2.resize(xplanel, (512, 512))
-            xplane = np.dstack((xplanef, xplanel)).reshape((1, 512, 512, 2))
+            xplane = np.dstack((xplanef, xplanel)).reshape((512, 512, 2))
             yplanef = np.mean(image >> 8, axis=1).astype('uint16')
             yplanef = cv2.resize(yplanef, (512, 512))
             yplanel = np.mean(image << 8 >> 8, axis=1).astype('uint16')
             yplanel = cv2.resize(yplanel, (512, 512))
-            yplane = np.dstack((yplanef, yplanel)).reshape((1, 512, 512, 2))
+            yplane = np.dstack((yplanef, yplanel)).reshape((512, 512, 2))
             zplanef = np.mean(image >> 8, axis=2).astype('uint16')
             zplanel = np.mean(image << 8 >> 8, axis=2).astype('uint16')
-            zplane = np.dstack((zplanef, zplanel)).reshape((1, 512, 512, 2))
-            image = np.concatenate((xplane, yplane, zplane), axis=3)
+            zplane = np.dstack((zplanef, zplanel)).reshape((512, 512, 2))
+            image = np.concatenate((xplane, yplane, zplane), axis=2)
         else:
             xplane = np.mean(image >> 8, axis=0).astype('uint16')
             xplane = cv2.resize(xplane, (512, 512))
             yplane = np.mean(image >> 8, axis=1).astype('uint16')
             yplane = cv2.resize(yplane, (512, 512))
             zplane = np.mean(image >> 8, axis=2).astype('uint16')
-            image = np.dstack((xplane, yplane, zplane)).reshape((1, 512, 512, 3))
+            image = np.dstack((xplane, yplane, zplane)).reshape((512, 512, 3))
         if self.out_format != 'keras':
-            image = np.rollaxis(image, 3, 1).astype('uint8')
+            image = np.rollaxis(image, 2).astype('uint8')
         if not self.groundtruth:
             return image
         else:
@@ -120,9 +120,9 @@ class Generator(Sequence):
             yplane = np.max(gt, axis=1).astype('uint8')
             yplane = cv2.resize(yplane, (512, 512))
             zplane = np.max(gt, axis=2).astype('uint8')
-            gt = np.dstack((xplane, yplane, zplane)).reshape((1, 512, 512, 3))
+            gt = np.dstack((xplane, yplane, zplane)).reshape((512, 512, 3))
             if self.out_format != 'keras':
-                gt = np.rollaxis(gt, 3, 1)
+                gt = np.rollaxis(gt, 2)
             return image, np.clip(gt, 0, 1)
 
     def __getitem__(self, index):
