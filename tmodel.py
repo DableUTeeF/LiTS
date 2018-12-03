@@ -85,4 +85,4 @@ class Unet(nn.Module):
         out = self.unet(out)
         out += x
         out = self.conv2(out)
-        return out
+        return nn.Sigmoid()(out)

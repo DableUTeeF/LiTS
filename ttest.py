@@ -25,7 +25,7 @@ if __name__ == '__main__':
     out = []
     c = 0
     test_gen = datagen.Generator(r'D:\LiTS\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1',
-                                 format='torch')
+                                 out_format='torch')
     model.eval()
     correct = 0
     total = 0

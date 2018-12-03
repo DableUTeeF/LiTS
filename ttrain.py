@@ -19,11 +19,21 @@ import time
 import datagen
 import numpy as np
 from torch.optim.lr_scheduler import MultiStepLR
+from sklearn.metrics import f1_score
 
 
 class DotDict(dict):
     def __getattr__(self, name):
         return self[name]
+
+
+def f1(y_true, y_pred):
+    y_true = y_true.cpu().detach().numpy().astype('float32').flatten()
+    y_pred = y_pred.cpu().detach().numpy().flatten()
+    y_pred = np.round(y_pred)
+    # print(y_true.dtype, y_pred.dtype)
+
+    return f1_score(y_true, y_pred, average='micro')
 
 
 def format_time(seconds):
@@ -70,7 +80,7 @@ if __name__ == '__main__':
         'model': '',
         'train_plot': False,
         'epochs': 90,
-        'try_no': 'bce1',
+        'try_no': 'bmse3',
         'imsize': 224,
         'imsize_l': 256,
         'traindir': '/root/palm/DATA/plant/train',
@@ -81,6 +91,7 @@ if __name__ == '__main__':
     best_loss = float('inf')
     best_no = 0
     start_epoch = 1
+    best_acc = 0
     try:
         print(f'loading log: log/try_{args.try_no}.json')
         log = eval(open(f'log/try_{args.try_no}.json', 'r').read())
@@ -95,19 +106,19 @@ if __name__ == '__main__':
                                 )
     scheduler = MultiStepLR(optimizer, [10, 30, 60])
 
-    criterion = nn.BCELoss().cuda()
+    criterion = nn.MSELoss().cuda()
     zz = 0
     if platform.system() == 'Windows':
         train_gen = datagen.Generator(r'D:\LiTS\Training_Batch2\media\nas\01_Datasets\CT\LITS\Training Batch 2',
-                                      format=args.data_format)
+                                      out_format=args.data_format)
         test_gen = datagen.Generator(r'D:\LiTS\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1',
-                                     format=args.data_format)
+                                     out_format=args.data_format)
     else:
         train_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 2',
-                                      format=args.data_format
+                                      out_format=args.data_format
                                       )
         test_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 1',
-                                     format=args.data_format
+                                     out_format=args.data_format
                                      )
     trainloader = torch.utils.data.DataLoader(train_gen,
                                               batch_size=args.batch_size,
@@ -148,16 +159,18 @@ if __name__ == '__main__':
         optimizer.zero_grad()
         start_time = time.time()
         last_time = start_time
+        acc = 0
         for batch_idx, (inputs, targets) in enumerate(trainloader):
             inputs, targets = inputs.to('cuda'), targets.to('cuda')
             inputs = inputs[0]
             targets = targets[0]
             iterations = max(int(np.ceil(max(inputs.shape[0], 0) / args.batch_mul)), 1)
-            for i in range(iterations):
+            for i in range(inputs.shape[0]-8):
                 outputs = model(inputs[i:i + args.batch_mul, :, :, :])
-                loss = criterion(outputs, targets[i:i + args.batch_mul, 0, :, :].float()) / iterations
+                loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :].float()) / (inputs.shape[0]-8)
                 loss.backward()
                 train_loss += loss.item() * args.batch_mul
+                # acc += f1(targets[i:i + args.batch_mul, :, :, :], outputs)
                 total += targets.size(0)
 
             optimizer.step()
@@ -179,34 +192,37 @@ if __name__ == '__main__':
         optimizer.step()
         optimizer.zero_grad()
         # scheduler2.step()
-        log['acc'].append(100. * correct / total)
+        # log['acc'].append(100. * correct / total)
         log['loss'].append(train_loss / (batch_idx + 1))
 
 
     def test(epoch):
-        global best_loss, best_no
+        global best_loss, best_no, best_acc
         model.eval()
         test_loss = 0
         correct = 0
         total = 0
+        acc = 0
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(val_loader):
                 inputs, targets = inputs.to('cuda'), targets.to('cuda')
                 inputs = inputs[0]
                 targets = targets[0]
                 iterations = max(int(np.ceil(max(inputs.shape[0], 0) / args.batch_mul)), 1)
-                for i in range(iterations):
+                for i in range(inputs.shape[0]-8):
                     outputs = model(inputs[i:i + args.batch_mul, :, :, :])
-                    loss = criterion(outputs, targets[i:i + args.batch_mul, 0, :, :].float()) / iterations
+                    loss = criterion(outputs, targets[i:i + args.batch_mul, :, :, :].float()) / (inputs.shape[0]-8)
                     test_loss += loss.item() * args.batch_mul
+                    acc += f1(targets[i:i + args.batch_mul, :, :, :], outputs)
                     total += targets.size(0)
 
                 # progress_bar(batch_idx, len(val_loader), 'Acc: %.3f%%'
                 #              % (100. * correct / total))
-        print(f' - val_loss: {test_loss / (batch_idx+1):.{5}}')
+        print(f' - val_acc: {acc / (total/8):.{5}} - val_loss: {test_loss / (batch_idx+1):.{5}}')
         # platue.step(correct)
-        log['val_acc'].append(100. * correct / total)
         loss = test_loss / (batch_idx + 1)
+        acc = acc / (total/8)
+        log['val_acc'].append(acc)
         # Save checkpoint.
         # print('Saving..')
         state = {
@@ -217,9 +233,10 @@ if __name__ == '__main__':
         }
         if not os.path.isdir('checkpoint'):
             os.mkdir('checkpoint')
-        if loss < best_loss and loss != 0:
+        if acc > best_acc and loss != 0:
             torch.save(state, f'./checkpoint/try_{args.try_no}best.t7')
             best_loss = loss
+            best_acc = acc
         torch.save(state, f'./checkpoint/try_{args.try_no}temp.t7')
         with open('log/try_{}.json'.format(args.try_no), 'w') as wr:
             wr.write(log.__str__())
@@ -229,4 +246,4 @@ if __name__ == '__main__':
         scheduler.step()
         train(epoch)
         test(epoch)
-        print(f'best: {best_loss}')
+        print(f'best: {best_loss} - {best_acc}')

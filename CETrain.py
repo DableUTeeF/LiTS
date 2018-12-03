@@ -98,17 +98,17 @@ if __name__ == '__main__':
     zz = 0
     if platform.system() == 'Windows':
         train_gen = datagen.Generator(r'D:\LiTS\Training_Batch2\media\nas\01_Datasets\CT\LITS\Training Batch 2',
-                                      format='ce'
+                                      out_format='ce'
                                       )
         test_gen = datagen.Generator(r'D:\LiTS\Training_Batch1\media\nas\01_Datasets\CT\LITS\Training Batch 1',
-                                     format='ce'
+                                     out_format='ce'
                                      )
     else:
         train_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 2',
-                                      format='ce'
+                                      out_format='ce'
                                       )
         test_gen = datagen.Generator('/root/palm/DATA/LITS/media/nas/01_Datasets/CT/LITS/Training Batch 1',
-                                     format='ce'
+                                     out_format='ce'
                                      )
     trainloader = torch.utils.data.DataLoader(train_gen,
                                               batch_size=args.batch_size,
