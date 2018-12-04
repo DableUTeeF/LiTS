@@ -14,7 +14,7 @@ from PIL import Image
 
 if __name__ == '__main__':
     dev = 'cuda'
-    model = tmodel.Unet(3).to(dev)
+    model = tmodel.Unet(1, 1).to(dev)
     # print(model)
     checkpoint = torch.load('checkpoint/try_2dmse1temp.t7')
     model.load_state_dict(checkpoint['net'])
@@ -47,9 +47,9 @@ if __name__ == '__main__':
             t = inputs.shape
             iterations = max(int(np.ceil(max(inputs.shape[0], 0) / 8)), 1)
             # mask = np.zeros(targets.shape)
-            outputs = model(inputs.float())
+            outputs = model(inputs[:, 0:1, :, :].float())
             outputs = outputs.cpu().detach().numpy()[0] * 255
-            for i in range(3):
+            for i in range(1):
                 img = Image.fromarray(outputs.astype('uint8')[i])
                 img.show()
             break

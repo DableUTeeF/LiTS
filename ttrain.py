@@ -20,6 +20,7 @@ import datagen
 import numpy as np
 from torch.optim.lr_scheduler import MultiStepLR
 from sklearn.metrics import f1_score
+import sys
 
 
 class DotDict(dict):
@@ -98,7 +99,7 @@ if __name__ == '__main__':
     except FileNotFoundError:
         log = {'acc': [], 'loss': [], 'val_acc': []}
         print(f'Log {args.try_no} not found')
-    model = tmodel.Unet(3).cuda()
+    model = tmodel.Unet(1, 1).cuda()
     optimizer = torch.optim.SGD(model.parameters(), 0.1,
                                 momentum=0.9,
                                 weight_decay=1e-4,
@@ -174,8 +175,8 @@ if __name__ == '__main__':
             #     train_loss += loss.item() * args.batch_mul
             #     # acc += f1(targets[i:i + args.batch_mul, :, :, :], outputs)
             #     total += targets.size(0)
-            outputs = model(inputs.float())
-            loss = criterion(outputs, targets.float())
+            outputs = model(inputs[:, 0:1, :, :].float())
+            loss = criterion(outputs, targets[:, 0:1, :, :].float())
             loss.backward()
             train_loss += loss.item() * args.batch_mul
             # acc += f1(targets[i:i + args.batch_mul, :, :, :], outputs)
@@ -186,17 +187,17 @@ if __name__ == '__main__':
             step_time = time.time() - last_time
             last_time = time.time()
             try:
-                print(f'\r{" "*(len(lss))}', end='')
+                sys.stdout.write(f'\r{" "*(len(lss))}')
             except NameError:
                 pass
             lss = f'{batch_idx}/{len(trainloader)} | ' + \
                   f'ETA: {format_time(step_time*(len(trainloader)-batch_idx))} - ' + \
                   f'loss: {train_loss/(batch_idx+1):.{5}}'
-            print(f'\r{lss}', end='')
+            sys.stdout.write(f'\r{lss}')
 
-        print(f'\r '
+        sys.stdout.write(f'\r '
               f'ToT: {format_time(time.time() - start_time)} - '
-              f'loss: {train_loss/(batch_idx+1):.{5}}', end='')
+              f'loss: {train_loss/(batch_idx+1):.{5}}')
         optimizer.step()
         optimizer.zero_grad()
         # scheduler2.step()
@@ -223,14 +224,15 @@ if __name__ == '__main__':
                 #     test_loss += loss.item() * args.batch_mul
                 #     acc += f1(targets[i:i + args.batch_mul, :, :, :], outputs)
                 #     total += targets.size(0)
-                outputs = model(inputs.float())
-                loss = criterion(outputs, targets.float())
+                outputs = model(inputs[:, 0:1, :, :].float())
+                loss = criterion(outputs, targets[:, 0:1, :, :].float())
                 test_loss += loss.item() * args.batch_mul
                 total += targets.size(0)
 
                 # progress_bar(batch_idx, len(val_loader), 'Acc: %.3f%%'
                 #              % (100. * correct / total))
-        print(f' - val_acc: {acc / (total/8):.{5}} - val_loss: {test_loss / (batch_idx+1):.{5}}')
+        sys.stdout.write(f' - val_acc: {acc / (total/8):.{5}} - val_loss: {test_loss / (batch_idx+1):.{5}}')
+        sys.stdout.write('\n')
         # platue.step(correct)
         loss = test_loss / (batch_idx + 1)
         acc = acc / (total/8)
